@@ -44,7 +44,16 @@ function requireAuth(req, res, next) {
 
 function requireRole(rol) {
   return (req, res, next) => {
-    if (req.session && req.session.usuario && req.session.usuario.rol === rol) return next();
+    if (req.session && req.session.usuario) {
+      // Si el rol no está definido y el usuario es 'admin', asumimos que tiene todos los permisos
+      if (!req.session.usuario.rol && req.session.usuario.usuario === 'admin') {
+        return next();
+      }
+      // Si el rol coincide, permitimos el acceso
+      if (req.session.usuario.rol === rol) {
+        return next();
+      }
+    }
     return res.status(403).json({ error: 'Permiso denegado' });
   };
 }
