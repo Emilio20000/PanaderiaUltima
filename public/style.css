@@ -1,0 +1,106 @@
+/* Estilos Generales y Centralización */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f2f5;
+    /* Usamos flexbox para centrar todo el contenido del body (título y formulario) */
+    display: flex;
+    flex-direction: column; /* Coloca los elementos (h1, br, form) verticalmente */
+    justify-content: center; /* Centrar verticalmente */
+    align-items: center; /* Centrar horizontalmente */
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px; /* Añadir un poco de espacio si la pantalla es pequeña */
+}
+
+/* Estilo del Título de la Panadería */
+h1 {
+    color: #5d4037; /* Color temático de panadería o chocolate */
+    margin-bottom: 0; /* Ya tienes br, pero es buena práctica resetearlo */
+    font-size: 2.2em;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+/* Estilo del Formulario (Contenedor Principal) */
+form {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+}
+
+/* Imagen de Usuario */
+form img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin-bottom: 20px;
+    object-fit: cover;
+}
+
+/* Etiquetas (Labels) */
+form label {
+    align-self: flex-start;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+    width: 100%;
+    margin-top: 10px;
+}
+
+/* Campos de Entrada (Inputs) */
+form input[type="text"],
+form input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box; 
+    font-size: 16px;
+}
+
+form input:focus {
+    border-color: #4a90e2; 
+    outline: none;
+}
+
+/* Contenedor del Checkbox de Visibilidad */
+.box-visible {
+    align-self: flex-start;
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.box-visible input[type="checkbox"] {
+    margin-right: 5px;
+}
+
+.box-visible label {
+    margin: 0;
+    font-weight: normal;
+    color: #555;
+    font-size: 0.9em;
+}
+
+/* Botón de Inicio de Sesión */
+form button[type="submit"] {
+    width: 100%;
+    padding: 10px;
+    background-color: #198de6; /* Usamos un color temático para el botón, por ejemplo naranja/calabaza */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+form button[type="submit"]:hover {
+    background-color: #198de6;
+}
