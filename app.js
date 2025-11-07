@@ -11,15 +11,21 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Configuración para confiar en el proxy de Render
+app.set('trust proxy', 1);
+
 // Sesiones (configuración segura para producción)
 app.use(session({
   secret: process.env.SESSION_SECRET || 'cambiame_en_produccion',
   resave: false,
   saveUninitialized: false,
   cookie: { 
-    maxAge: 1000 * 60 * 60, // 1 hora
-    secure: process.env.NODE_ENV === 'production' // Solo HTTPS en producción
-  }
+    maxAge: 1000 * 60 * 60 * 24, // 24 horas
+    secure: process.env.NODE_ENV === 'production', // Solo HTTPS en producción
+    sameSite: 'lax'  // Protección contra CSRF
+  },
+  name: 'sessionId', // Nombre personalizado para la cookie
+  rolling: true // Renueva el tiempo de expiración en cada petición
 }));
 
 // Servir contenido estático (frontend)
