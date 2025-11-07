@@ -18,16 +18,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function verificarUsuario() {
     try {
-      const respuesta = await fetch('/api/usuario');
-      if (!respuesta.ok) throw new Error('No autenticado');
-      const datos = await respuesta.json();
-      esAdmin = datos.usuario.rol === 'admin';
-      document.getElementById('btn-agregar').style.display = esAdmin ? 'inline-block' : 'none';
-      // Si es admin, ocultar sección de carrito
-      seccionCarrito.style.display = esAdmin ? 'none' : 'block';
+      const usuario = await verificarAutenticacion();
+      if (!usuario) {
+        throw new Error('No autenticado');
+      }
+      
+      console.log('Usuario verificado:', usuario);
+      esAdmin = usuario.rol === 'admin' || usuario.usuario === 'admin';
+      
+      const btnAgregar = document.getElementById('btn-agregar');
+      if (btnAgregar) {
+        btnAgregar.style.display = esAdmin ? 'inline-block' : 'none';
+      }
+      
+      if (seccionCarrito) {
+        seccionCarrito.style.display = esAdmin ? 'none' : 'block';
+      }
+      
+      return true;
     } catch (error) {
-      // no autenticado -> redirigir a login
-      window.location.href = '/index.html';
+      console.error('Error en verificarUsuario:', error);
+      return false;
     }
   }
 

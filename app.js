@@ -79,9 +79,24 @@ app.post('/api/iniciar-sesion', (req, res) => {
     // ATENCIÓN: aquí se compara en texto claro. Para producción usar hashing (bcrypt).
     if (datosUsuario.contrasena !== contrasena) return res.status(400).json({ error: 'Credenciales inválidas' });
 
-    // Guardar en sesión
-    req.session.usuario = { id: datosUsuario.id, usuario: datosUsuario.usuario, rol: datosUsuario.rol };
-    return res.json({ ok: true, rol: datosUsuario.rol });
+    // Guardar en sesión y esperar a que se guarde
+    req.session.usuario = { 
+      id: datosUsuario.id, 
+      usuario: datosUsuario.usuario, 
+      rol: datosUsuario.rol || (datosUsuario.usuario === 'admin' ? 'admin' : 'user') 
+    };
+    
+    req.session.save((err) => {
+      if (err) {
+        console.error('Error al guardar la sesión:', err);
+        return res.status(500).json({ error: 'Error al guardar la sesión' });
+      }
+      return res.json({ 
+        ok: true, 
+        rol: datosUsuario.rol || (datosUsuario.usuario === 'admin' ? 'admin' : 'user'),
+        usuario: req.session.usuario
+      });
+    });
   });
 });
 

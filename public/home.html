@@ -73,12 +73,19 @@
   <script src="/auth.js"></script>
   <script src="/main.js"></script>
   <script>
-    // Verificar autenticación al cargar la página
-    document.addEventListener('DOMContentLoaded', async () => {
-      const usuario = await verificarAutenticacion();
-      if (!usuario) {
-        return; // La función verificarAutenticacion ya maneja la redirección
-      }
+    // Esperar a que el DOM esté listo
+    document.addEventListener('DOMContentLoaded', () => {
+      // Verificar la autenticación cada segundo durante los primeros 5 segundos
+      let intentos = 0;
+      const intervalo = setInterval(async () => {
+        const usuario = await verificarAutenticacion();
+        console.log('Intento de verificación:', intentos + 1, usuario);
+        
+        if (usuario || intentos >= 5) {
+          clearInterval(intervalo);
+        }
+        intentos++;
+      }, 1000);
     });
   </script>
 </body>

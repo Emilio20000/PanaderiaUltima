@@ -29,8 +29,10 @@ document.addEventListener("submit", async (e)=>{
             alert(datos.error || 'Error al iniciar sesión');
             return;
         }
-        // login ok -> redirigir
-        window.location.href = '/home.html';
+        // Esperar un momento para asegurarnos de que la sesión se establezca
+        setTimeout(() => {
+            window.location.href = '/home.html';
+        }, 500);
     } catch (error) {
         console.error('Error al iniciar sesión:', error);
         alert('Error al comunicarse con el servidor');
