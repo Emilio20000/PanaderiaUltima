@@ -11,18 +11,21 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Configuración para confiar en el proxy de Render
-app.set('trust proxy', 1);
+// Configuración para confiar en el proxy de Render en producción
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
 
-// Sesiones (configuración segura para producción)
+// Sesiones (configuración para desarrollo y producción)
 app.use(session({
   secret: process.env.SESSION_SECRET || 'cambiame_en_produccion',
-  resave: false,
-  saveUninitialized: false,
+  resave: true,
+  saveUninitialized: true,
   cookie: { 
     maxAge: 1000 * 60 * 60 * 24, // 24 horas
-    secure: process.env.NODE_ENV === 'production', // Solo HTTPS en producción
-    sameSite: 'lax'  // Protección contra CSRF
+    // En producción, secure será true solo si estamos usando HTTPS
+    secure: false,
+    sameSite: 'lax'
   },
   name: 'sessionId', // Nombre personalizado para la cookie
   rolling: true // Renueva el tiempo de expiración en cada petición
@@ -44,7 +47,12 @@ const pool = mysql.createPool({
 
 // Helper: middleware para asegurar sesión / roles
 function requireAuth(req, res, next) {
-  if (req.session && req.session.usuario) return next();
+  // Verificación más completa de la sesión
+  if (req.session && req.session.autenticado && req.session.usuario) {
+    // Renovar la cookie en cada petición
+    req.session.touch();
+    return next();
+  }
   return res.status(401).json({ error: 'No autorizado' });
 }
 
@@ -79,22 +87,41 @@ app.post('/api/iniciar-sesion', (req, res) => {
     // ATENCIÓN: aquí se compara en texto claro. Para producción usar hashing (bcrypt).
     if (datosUsuario.contrasena !== contrasena) return res.status(400).json({ error: 'Credenciales inválidas' });
 
-    // Guardar en sesión y esperar a que se guarde
-    req.session.usuario = { 
-      id: datosUsuario.id, 
-      usuario: datosUsuario.usuario, 
-      rol: datosUsuario.rol || (datosUsuario.usuario === 'admin' ? 'admin' : 'user') 
+    // Preparar los datos del usuario
+    const datosParaSesion = {
+      id: datosUsuario.id,
+      usuario: datosUsuario.usuario,
+      rol: datosUsuario.usuario === 'admin' ? 'admin' : 'user'
     };
-    
-    req.session.save((err) => {
+
+    // Guardar en sesión
+    req.session.usuario = datosParaSesion;
+    req.session.autenticado = true; // Flag explícito de autenticación
+
+    // Forzar la regeneración del ID de sesión cuando iniciamos sesión
+    req.session.regenerate((err) => {
       if (err) {
-        console.error('Error al guardar la sesión:', err);
-        return res.status(500).json({ error: 'Error al guardar la sesión' });
+        console.error('Error al regenerar la sesión:', err);
+        return res.status(500).json({ error: 'Error al iniciar sesión' });
       }
-      return res.json({ 
-        ok: true, 
-        rol: datosUsuario.rol || (datosUsuario.usuario === 'admin' ? 'admin' : 'user'),
-        usuario: req.session.usuario
+
+      // Volver a establecer los datos del usuario en la nueva sesión
+      req.session.usuario = datosParaSesion;
+      req.session.autenticado = true;
+
+      // Guardar la sesión
+      req.session.save((err) => {
+        if (err) {
+          console.error('Error al guardar la sesión:', err);
+          return res.status(500).json({ error: 'Error al guardar la sesión' });
+        }
+
+        // Responder con los datos necesarios
+        return res.json({
+          ok: true,
+          rol: datosParaSesion.rol,
+          usuario: datosParaSesion
+        });
       });
     });
   });
@@ -111,8 +138,24 @@ app.post('/api/cerrar-sesion', (req, res) => {
 });
 
 app.get('/api/usuario', (req, res) => {
-  if (req.session && req.session.usuario) return res.json({ usuario: req.session.usuario });
-  return res.status(401).json({ error: 'No autenticado' });
+  console.log('Verificando sesión:', {
+    tieneSession: !!req.session,
+    autenticado: req.session?.autenticado,
+    usuario: req.session?.usuario
+  });
+
+  if (req.session && req.session.autenticado && req.session.usuario) {
+    // Renovar la cookie en cada verificación exitosa
+    req.session.touch();
+    return res.json({ 
+      usuario: req.session.usuario,
+      autenticado: true
+    });
+  }
+  return res.status(401).json({ 
+    error: 'No autenticado',
+    autenticado: false
+  });
 });
 
 // --- Productos (CRUD) ---
