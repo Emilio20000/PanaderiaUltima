@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Iniciar Sesión - La Desesperanza</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>LA DESESPERANZA</h1>
+    <br><br>
+    <form>
+        <img src="./images/user.jpg" alt="imagen-usuario">
+        <label for="usuario">Usuario</label>
+        <input type="text" id="usuario" placeholder="Ejemplo" required>
+        <label for="contrasena">Contraseña</label>
+        <input type="password" id="contrasena" placeholder="Contraseña" required>
+
+        <div class="caja-visible">
+            <input type="checkbox" id="mostrar">
+            <label for="mostrar">Mostrar Contraseña</label>
+        </div>
+
+        <button type="submit" id="enviar">Iniciar Sesión</button>
+    </form>
+    
+    <script src="./login.js"></script>
+</body>
+</html>
