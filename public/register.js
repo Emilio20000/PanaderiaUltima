@@ -5,18 +5,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const loginForm = document.getElementById('login-form');
   const registroForm = document.getElementById('registro-form');
 
-  // Toggle a formulario de registro
+  // Mostrar el formulario de registro posicionándolo debajo del login (scroll)
   btnRegistro.addEventListener('click', (e) => {
     e.preventDefault();
-    loginForm.style.display = 'none';
+    // Si el registro está oculto por algún motivo, mostrarlo
     registroForm.style.display = 'block';
+    registroForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // enfocar el primer campo
+    const first = registroForm.querySelector('input');
+    if (first) first.focus();
   });
 
-  // Toggle a formulario de login
+  // Volver al formulario de login (scroll)
   btnLogin.addEventListener('click', (e) => {
     e.preventDefault();
-    registroForm.style.display = 'none';
-    loginForm.style.display = 'block';
+    loginForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const first = loginForm.querySelector('input');
+    if (first) first.focus();
   });
 
   // Manejo del formulario de registro
