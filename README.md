@@ -1,47 +1,61 @@
-# La Desesperanza - Panadería API
+# La Desesperanza - Panadería Web
 
-Sistema de gestión de panadería con carrito, compras, usuario y funcionalidades admin.
+Sistema completo de e-commerce para una panadería con autenticación, carrito de compras, inventario de productos, historial de ventas y gestión de fondos de usuario.
 
-## Requisitos
+## 🚀 Requisitos
 
-- Node.js v16+
+- Node.js v14+
 - npm
-- MySQL (local o remoto como freesqldatabase.com)
+- MySQL 5.7+ (local o freesqldatabase.com)
+- bcryptjs (instalado automáticamente con npm)
 
-## Instalación
+## 📦 Instalación Rápida
 
-1. Clonar el repo:
+### 1. Clonar el repositorio
 ```bash
-git clone https://github.com/Emilio20000/Panaderialocalhost.git
-cd Panaderialocalhost
+git clone https://github.com/Emilio20000/PanaderiaUltima.git
+cd PanaderiaUltima
 ```
 
-2. Instalar dependencias:
+### 2. Instalar dependencias
 ```bash
 npm install
 ```
 
-3. **Crear la base de datos**: Ejecutar `BaseDesesperanza.sql` en tu servidor MySQL (phpMyAdmin, CLI, etc.)
-   - Si usas **freesqldatabase.com**, accede a phpMyAdmin desde el panel y copia/pega el contenido de `BaseDesesperanza.sql`
-   - Asegúrate de ejecutar `CREATE DATABASE IF NOT EXISTS basedesesperanza` primero, o ajusta el nombre según tu BD
+### 3. Crear la base de datos
+Ejecutar `BaseDesesperanza.sql` en tu servidor MySQL:
 
-4. Configurar variables de entorno (opcional para desarrollo local):
-   ```
-   DB_HOST=sql5.freesqldatabase.com
-   DB_USER=sql5811038
-   DB_PASSWORD=E9Ets8Qxlp
-   DB_NAME=sql5811038
-   PORT=3000
-   SESSION_SECRET=tu_secreto_seguro
-   NODE_ENV=development
-   ```
+**Opción A: Desde phpMyAdmin (freesqldatabase.com)**
+1. Inicia sesión en phpMyAdmin
+2. Selecciona tu BD (sql5811038)
+3. Abre la pestaña **SQL**
+4. Copia y pega el contenido de `BaseDesesperanza.sql`
+5. Haz clic en **Ejecutar**
 
-5. Ejecutar la app:
+**Opción B: Desde CLI**
+```bash
+mysql -h sql5.freesqldatabase.com -u sql5811038 -p sql5811038 < BaseDesesperanza.sql
+```
+(Ingresa contraseña: `E9Ets8Qxlp`)
+
+### 4. Configurar variables de entorno (opcional)
+Crear archivo `.env` en la raíz:
+```
+DB_HOST=sql5.freesqldatabase.com
+DB_USER=sql5811038
+DB_PASSWORD=E9Ets8Qxlp
+DB_NAME=sql5811038
+PORT=3000
+SESSION_SECRET=tu_secreto_seguro
+NODE_ENV=development
+```
+
+### 5. Ejecutar la aplicación
 ```bash
 npm start
 ```
 
-La app estará en `http://localhost:3000`
+**La app estará disponible en**: `http://localhost:3000`
 
 ## Características Implementadas
 
