@@ -10,8 +10,12 @@
 <body>
     <h1>LA DESESPERANZA</h1>
     <br><br>
-    <form>
-        <img src="./images/user.jpg" alt="imagen-usuario">
+    <br>
+    
+    <!-- Contenedor principal de login/registro -->
+    <div id="auth-container">
+        <!-- Formulario de Login -->
+        <form id="login-form">
         <label for="usuario">Usuario</label>
         <input type="text" id="usuario" placeholder="Ejemplo" required>
         <label for="contrasena">Contraseña</label>
@@ -24,20 +28,31 @@
 
         <button type="submit" id="enviar">Iniciar Sesión</button>
     </form>
+        
+        <div style="text-align: center; margin-top: 15px;">
+            <p style="margin: 0; font-size: 14px; color: #666;">¿No tienes cuenta?</p>
+            <button type="button" id="btn-registro" style="background: none; border: none; color: #0066cc; cursor: pointer; font-weight: bold; text-decoration: underline; padding: 5px 0;">Registrarse aquí</button>
+        </div>
     
     <!-- Formulario de registro (solo usuarios normales, email @gmail.com requerido) -->
-    <hr>
-    <h2>Registrarse</h2>
-    <form id="registro-form">
+        <!-- Formulario de Registro (oculto inicialmente) -->
         <label for="usuario_reg">Usuario</label>
+            <img src="./images/user.jpg" alt="imagen-usuario">
+            <h2 style="margin-top: 0; text-align: center; color: #8B5A3C;">Crear Cuenta</h2>
         <input type="text" id="usuario_reg" placeholder="Usuario" required>
-        <label for="email_reg">Correo (gmail.com)</label>
+        <input type="text" id="usuario_reg" placeholder="Mínimo 3 caracteres" required>
         <input type="email" id="email_reg" placeholder="usuario@gmail.com" required>
         <label for="contrasena_reg">Contraseña</label>
         <input type="password" id="contrasena_reg" placeholder="Contraseña" required>
-        <button type="submit" id="registrar">Registrarse</button>
-    </form>
+        <input type="password" id="contrasena_reg" placeholder="Mínimo 6 caracteres" required>
+        <button type="submit" id="registrar" style="margin-bottom: 10px;">Registrarse</button>
+        
+        <div style="text-align: center;">
+            <p style="margin: 0; font-size: 14px; color: #666;">¿Ya tienes cuenta?</p>
+            <button type="button" id="btn-login" style="background: none; border: none; color: #0066cc; cursor: pointer; font-weight: bold; text-decoration: underline; padding: 5px 0;">Inicia sesión aquí</button>
+        </div>
 
+    </div>
     <script src="./login.js"></script>
     <script src="./register.js"></script>
 </body>
