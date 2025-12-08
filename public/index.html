@@ -25,6 +25,20 @@
         <button type="submit" id="enviar">Iniciar Sesión</button>
     </form>
     
+    <!-- Formulario de registro (solo usuarios normales, email @gmail.com requerido) -->
+    <hr>
+    <h2>Registrarse</h2>
+    <form id="registro-form">
+        <label for="usuario_reg">Usuario</label>
+        <input type="text" id="usuario_reg" placeholder="Usuario" required>
+        <label for="email_reg">Correo (gmail.com)</label>
+        <input type="email" id="email_reg" placeholder="usuario@gmail.com" required>
+        <label for="contrasena_reg">Contraseña</label>
+        <input type="password" id="contrasena_reg" placeholder="Contraseña" required>
+        <button type="submit" id="registrar">Registrarse</button>
+    </form>
+
     <script src="./login.js"></script>
+    <script src="./register.js"></script>
 </body>
 </html>

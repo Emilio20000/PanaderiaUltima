@@ -1,6 +1,6 @@
 const express = require('express');
 const mysql = require('mysql2');
-const { Pool } = require('pg');
+const bcrypt = require('bcryptjs');
 const bodyParser = require('body-parser');
 const path = require('path');
 const session = require('express-session');
@@ -12,52 +12,182 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Sesiones (configuración segura para producción)
+// Configuración para confiar en el proxy de Render en producción
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
+// Sesiones (configuración para desarrollo y producción)
 app.use(session({
   secret: process.env.SESSION_SECRET || 'cambiame_en_produccion',
-  resave: false,
-  saveUninitialized: false,
+  resave: true,
+  saveUninitialized: true,
   cookie: { 
-    maxAge: 1000 * 60 * 60, // 1 hora
-    secure: process.env.NODE_ENV === 'production' // Solo HTTPS en producción
-  }
+    maxAge: 1000 * 60 * 60 * 24, // 24 horas
+    // En producción, secure será true solo si estamos usando HTTPS
+    secure: false,
+    sameSite: 'lax'
+  },
+  name: 'sessionId', // Nombre personalizado para la cookie
+  rolling: true // Renueva el tiempo de expiración en cada petición
 }));
 
 // Servir contenido estático (frontend)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Configuración de base de datos
-let pool;
-if (process.env.DATABASE_URL) {
-  // Configuración PostgreSQL para producción
-  pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-      rejectUnauthorized: false // Necesario para Render
-    }
+// Configuración de base de datos MySQL
+const pool = mysql.createPool({
+  host: process.env.DB_HOST || 'sql5.freesqldatabase.com',
+  user: process.env.DB_USER || 'sql5811038',
+  password: process.env.DB_PASSWORD || 'E9Ets8Qxlp',
+  database: process.env.DB_NAME || 'sql5811038',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+});
+
+// Agregar fondos al perfil del usuario (limite máximo)
+app.post('/api/usuarios/fondos', requireAuth, (req, res) => {
+  const cantidad = Number(req.body.cantidad);
+  if (isNaN(cantidad) || cantidad <= 0) return res.status(400).json({ error: 'Cantidad inválida' });
+  if (cantidad > MAX_FONDOS) return res.status(400).json({ error: 'Cantidad excede el límite permitido' });
+
+  const idUsuario = req.session.usuario.id;
+  pool.query('SELECT fondos FROM usuarios WHERE id = ?', [idUsuario], (err, rows) => {
+    if (err) return res.status(500).json({ error: 'Error del servidor' });
+    if (rows.length === 0) return res.status(404).json({ error: 'Usuario no encontrado' });
+    const actuales = Number(rows[0].fondos || 0);
+    const nuevo = actuales + cantidad;
+    if (nuevo > MAX_FONDOS) return res.status(400).json({ error: 'Supera el máximo permitido' });
+    pool.query('UPDATE usuarios SET fondos = ? WHERE id = ?', [nuevo, idUsuario], (errUpd) => {
+      if (errUpd) return res.status(500).json({ error: 'Error actualizando fondos' });
+      res.json({ ok: true, fondos: nuevo });
+    });
   });
-} else {
-  // Configuración MySQL para desarrollo local
-  pool = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: 'n0m3l0',
-    database: 'basedesesperanza',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
+});
+
+// Rutas CRUD de usuarios (solo admin)
+app.get('/api/usuarios', requireAuth, requireRole('admin'), (req, res) => {
+  pool.query('SELECT id, usuario, email, rol, fondos FROM usuarios', (err, filas) => {
+    if (err) return res.status(500).json({ error: 'Error obteniendo usuarios' });
+    res.json(filas);
+  });
+});
+
+app.get('/api/usuarios/:id', requireAuth, requireRole('admin'), (req, res) => {
+  const id = req.params.id;
+  pool.query('SELECT id, usuario, email, rol, fondos FROM usuarios WHERE id = ?', [id], (err, filas) => {
+    if (err) return res.status(500).json({ error: 'Error obteniendo usuario' });
+    if (filas.length === 0) return res.status(404).json({ error: 'Usuario no encontrado' });
+    res.json(filas[0]);
+  });
+});
+
+app.put('/api/usuarios/:id', requireAuth, requireRole('admin'), (req, res) => {
+  const id = req.params.id;
+  const { email, rol, contrasena } = req.body;
+  const updates = [];
+  const params = [];
+  if (email) { updates.push('email = ?'); params.push(email); }
+  if (rol) { updates.push('rol = ?'); params.push(rol); }
+  if (contrasena) { const hash = bcrypt.hashSync(contrasena, 10); updates.push('contrasena = ?'); params.push(hash); }
+  if (updates.length === 0) return res.status(400).json({ error: 'Nada para actualizar' });
+  params.push(id);
+  const sql = 'UPDATE usuarios SET ' + updates.join(', ') + ' WHERE id = ?';
+  pool.query(sql, params, (err, result) => {
+    if (err) return res.status(500).json({ error: 'Error actualizando usuario' });
+    if (result.affectedRows === 0) return res.status(404).json({ error: 'Usuario no encontrado' });
+    res.json({ ok: true });
+  });
+});
+
+app.delete('/api/usuarios/:id', requireAuth, requireRole('admin'), (req, res) => {
+  const id = req.params.id;
+  pool.query('DELETE FROM usuarios WHERE id = ?', [id], (err, result) => {
+    if (err) return res.status(500).json({ error: 'Error borrando usuario' });
+    if (result.affectedRows === 0) return res.status(404).json({ error: 'Usuario no encontrado' });
+    res.json({ ok: true });
+  });
+});
+
+// Registro de nuevo usuario
+app.post('/api/registro', (req, res) => {
+  const { usuario, contrasena, email } = req.body;
+  if (!usuario || !contrasena || !email) return res.status(400).json({ error: 'usuario, contrasena y email son requeridos' });
+  if (usuario.length < 3 || contrasena.length < 6) return res.status(400).json({ error: 'Usuario o contraseña demasiado cortos' });
+
+  // validar email gmail obligatorio
+  if (!/^[^@\s]+@gmail\.com$/i.test(email)) return res.status(400).json({ error: 'Solo se permiten correos @gmail.com para el registro' });
+
+  pool.query('SELECT id FROM usuarios WHERE usuario = ? OR email = ?', [usuario, email], (err, rows) => {
+    if (err) {
+      console.error('Error verificando usuario existente:', err);
+      return res.status(500).json({ error: 'Error del servidor' });
+    }
+    if (rows.length > 0) return res.status(400).json({ error: 'Usuario o email ya registrado' });
+
+    const hash = bcrypt.hashSync(contrasena, 10);
+    // solo crear usuarios normales (user). No permitir crear admins desde registro.
+    pool.query('INSERT INTO usuarios (usuario, contrasena, email, rol, fondos) VALUES (?, ?, ?, ?, ?)',
+      [usuario, hash, email, 'user', 0], (errIns) => {
+        if (errIns) {
+          console.error('Error registrando usuario:', errIns);
+          return res.status(500).json({ error: 'Error al registrar usuario' });
+        }
+        res.json({ ok: true });
+      });
+  });
+});
+const VALID_TEMPORADAS = ['normal', 'navideño'];
+const MAX_FONDOS = 999999999999;
+
+// Re-hashear contraseñas en texto plano (si existen) al iniciar la app.
+function rehashPlainPasswords() {
+  pool.query('SELECT id, contrasena FROM usuarios', (err, rows) => {
+    if (err) return console.error('Error comprobando contraseñas:', err);
+    rows.forEach(u => {
+      const pass = u.contrasena || '';
+      if (!/^\$2[aby]\$/.test(pass)) {
+        try {
+          const hashed = bcrypt.hashSync(pass, 10);
+          pool.query('UPDATE usuarios SET contrasena = ? WHERE id = ?', [hashed, u.id], (err) => {
+            if (err) console.error('Error actualizando hash de usuario', u.id, err);
+            else console.log('Hasheada contraseña de usuario id=', u.id);
+          });
+        } catch (e) {
+          console.error('Error al hashear contraseña:', e);
+        }
+      }
+    });
   });
 }
 
+// Ejecutar rehash en arranque (intento silencioso)
+rehashPlainPasswords();
+
 // Helper: middleware para asegurar sesión / roles
 function requireAuth(req, res, next) {
-  if (req.session && req.session.usuario) return next();
+  // Verificación más completa de la sesión
+  if (req.session && req.session.autenticado && req.session.usuario) {
+    // Renovar la cookie en cada petición
+    req.session.touch();
+    return next();
+  }
   return res.status(401).json({ error: 'No autorizado' });
 }
 
 function requireRole(rol) {
   return (req, res, next) => {
-    if (req.session && req.session.usuario && req.session.usuario.rol === rol) return next();
+    if (req.session && req.session.usuario) {
+      // Si el rol no está definido y el usuario es 'admin', asumimos que tiene todos los permisos
+      if (!req.session.usuario.rol && req.session.usuario.usuario === 'admin') {
+        return next();
+      }
+      // Si el rol coincide, permitimos el acceso
+      if (req.session.usuario.rol === rol) {
+        return next();
+      }
+    }
     return res.status(403).json({ error: 'Permiso denegado' });
   };
 }
@@ -74,12 +204,52 @@ app.post('/api/iniciar-sesion', (req, res) => {
     }
     if (rows.length === 0) return res.status(400).json({ error: 'Credenciales inválidas' });
     const datosUsuario = rows[0];
-    // ATENCIÓN: aquí se compara en texto claro. Para producción usar hashing (bcrypt).
-    if (datosUsuario.contrasena !== contrasena) return res.status(400).json({ error: 'Credenciales inválidas' });
+      // Comparar con bcrypt
+      try {
+        const ok = bcrypt.compareSync(contrasena, datosUsuario.contrasena || '');
+        if (!ok) return res.status(400).json({ error: 'Credenciales inválidas' });
+      } catch (e) {
+        console.error('Error comparando contraseñas:', e);
+        return res.status(500).json({ error: 'Error del servidor' });
+      }
+
+    // Preparar los datos del usuario
+    const datosParaSesion = {
+      id: datosUsuario.id,
+      usuario: datosUsuario.usuario,
+      rol: datosUsuario.rol || (datosUsuario.usuario === 'admin' ? 'admin' : 'user')
+    };
 
     // Guardar en sesión
-    req.session.usuario = { id: datosUsuario.id, usuario: datosUsuario.usuario, rol: datosUsuario.rol };
-    return res.json({ ok: true, rol: datosUsuario.rol });
+    req.session.usuario = datosParaSesion;
+    req.session.autenticado = true; // Flag explícito de autenticación
+
+    // Forzar la regeneración del ID de sesión cuando iniciamos sesión
+    req.session.regenerate((err) => {
+      if (err) {
+        console.error('Error al regenerar la sesión:', err);
+        return res.status(500).json({ error: 'Error al iniciar sesión' });
+      }
+
+      // Volver a establecer los datos del usuario en la nueva sesión
+      req.session.usuario = datosParaSesion;
+      req.session.autenticado = true;
+
+      // Guardar la sesión
+      req.session.save((err) => {
+        if (err) {
+          console.error('Error al guardar la sesión:', err);
+          return res.status(500).json({ error: 'Error al guardar la sesión' });
+        }
+
+        // Responder con los datos necesarios
+        return res.json({
+          ok: true,
+          rol: datosParaSesion.rol,
+          usuario: datosParaSesion
+        });
+      });
+    });
   });
 });
 
@@ -94,8 +264,24 @@ app.post('/api/cerrar-sesion', (req, res) => {
 });
 
 app.get('/api/usuario', (req, res) => {
-  if (req.session && req.session.usuario) return res.json({ usuario: req.session.usuario });
-  return res.status(401).json({ error: 'No autenticado' });
+  console.log('Verificando sesión:', {
+    tieneSession: !!req.session,
+    autenticado: req.session?.autenticado,
+    usuario: req.session?.usuario
+  });
+
+  if (req.session && req.session.autenticado && req.session.usuario) {
+    // Renovar la cookie en cada verificación exitosa
+    req.session.touch();
+    return res.json({ 
+      usuario: req.session.usuario,
+      autenticado: true
+    });
+  }
+  return res.status(401).json({ 
+    error: 'No autenticado',
+    autenticado: false
+  });
 });
 
 // --- Productos (CRUD) ---
@@ -114,6 +300,13 @@ app.post('/api/productos', requireAuth, requireRole('admin'), (req, res) => {
   if (!nombre || !url_imagen || precio == null || cantidad == null || !temporada) {
     return res.status(400).json({ error: 'Campos requeridos: nombre, url_imagen, precio, cantidad, temporada' });
   }
+  // Validaciones adicionales
+  if (typeof nombre !== 'string' || nombre.trim().length < 1) return res.status(400).json({ error: 'Nombre inválido' });
+  if (!VALID_TEMPORADAS.includes(temporada)) return res.status(400).json({ error: 'Temporada inválida' });
+  const p = Number(precio);
+  const q = Number(cantidad);
+  if (isNaN(p) || p <= 0 || p > 10000000) return res.status(400).json({ error: 'Precio inválido' });
+  if (!Number.isInteger(q) || q < 0 || q > 1000000000) return res.status(400).json({ error: 'Cantidad inválida' });
   pool.query('INSERT INTO productos (nombre, url_imagen, precio, cantidad, temporada) VALUES (?, ?, ?, ?, ?)',
     [nombre, url_imagen, precio, cantidad, temporada], (err, result) => {
       if (err) {
@@ -130,6 +323,11 @@ app.put('/api/productos/:id', requireAuth, requireRole('admin'), (req, res) => {
   if (!nombre || !url_imagen || precio == null || cantidad == null || !temporada) {
     return res.status(400).json({ error: 'Campos requeridos: nombre, url_imagen, precio, cantidad, temporada' });
   }
+  if (!VALID_TEMPORADAS.includes(temporada)) return res.status(400).json({ error: 'Temporada inválida' });
+  const p = Number(precio);
+  const q = Number(cantidad);
+  if (isNaN(p) || p <= 0 || p > 10000000) return res.status(400).json({ error: 'Precio inválido' });
+  if (!Number.isInteger(q) || q < 0 || q > 1000000000) return res.status(400).json({ error: 'Cantidad inválida' });
   pool.query('UPDATE productos SET nombre=?, url_imagen=?, precio=?, cantidad=?, temporada=? WHERE id=?',
     [nombre, url_imagen, precio, cantidad, temporada, id], (err, result) => {
       if (err) {
@@ -312,8 +510,10 @@ app.post('/api/carrito/comprar', (req, res) => {
       return res.status(500).json({ error: 'Error del servidor' });
     }
     if (items.length === 0) return res.status(400).json({ error: 'Carrito vacío' });
+    // Inicio de transacción para consistencia y verificación de fondos
+    const usuarioSesion = req.session.usuario;
+    if (!usuarioSesion || !usuarioSesion.id) return res.status(401).json({ error: 'No autenticado' });
 
-    // Inicio de transacción para consistencia
     pool.getConnection((errConexion, conexion) => {
       if (errConexion) {
         console.error('Error obteniendo conexión:', errConexion);
@@ -326,50 +526,73 @@ app.post('/api/carrito/comprar', (req, res) => {
           return res.status(500).json({ error: 'Error del servidor' });
         }
 
-        // generar nuevo id_venta
-        conexion.query('SELECT IFNULL(MAX(id_venta), 0) + 1 AS siguienteVenta FROM ventas', (errV, filasV) => {
-          if (errV) return conexion.rollback(() => { conexion.release(); res.status(500).json({ error: 'Error generando id_venta' }); });
-          const idVenta = filasV[0].siguienteVenta || 1;
+        // Bloquear fila de usuario para fondos
+        conexion.query('SELECT fondos FROM usuarios WHERE id = ? FOR UPDATE', [usuarioSesion.id], (errF, filasF) => {
+          if (errF) return conexion.rollback(() => { conexion.release(); res.status(500).json({ error: 'Error verificando fondos' }); });
+          if (filasF.length === 0) return conexion.rollback(() => { conexion.release(); res.status(404).json({ error: 'Usuario no encontrado' }); });
+          const fondos = Number(filasF[0].fondos || 0);
 
-          // Crear tareas para insertar ventas y actualizar stock
-          const tareas = items.map(item => {
-            return new Promise((resolve, reject) => {
-              // Insertar venta
-              conexion.query('INSERT INTO ventas (id_venta, id_producto, nombre, precio, cantidad, fecha) VALUES (?, ?, ?, ?, ?, NOW())',
-                [idVenta, item.producto_id, item.nombre || '', item.precio, item.cantidad], (errIns) => {
-                  if (errIns) return reject(errIns);
-                  
-                  // Actualizar stock del producto
-                  conexion.query('UPDATE productos SET cantidad = cantidad - ? WHERE id = ? AND cantidad >= ?',
-                    [item.cantidad, item.producto_id, item.cantidad], (errUpd) => {
-                      if (errUpd) return reject(errUpd);
-                      
-                      // Verificar que la actualización fue exitosa
-                      if (errUpd?.affectedRows === 0) {
-                        return reject(new Error('Stock insuficiente para el producto ' + item.nombre));
-                      }
-                      resolve();
+          // Calcular total
+          let total = 0;
+          for (const it of items) {
+            total += Number(it.precio || 0) * Number(it.cantidad || 0);
+          }
+          if (total <= 0) return conexion.rollback(() => { conexion.release(); res.status(400).json({ error: 'Total inválido' }); });
+          if (fondos < total) return conexion.rollback(() => { conexion.release(); res.status(400).json({ error: 'Fondos insuficientes' }); });
+
+          // Crear cabecera de venta
+          conexion.query('INSERT INTO ventas_cab (usuario_id, total) VALUES (?, ?)', [usuarioSesion.id, total], (errInsCab, resultadoCab) => {
+            if (errInsCab) return conexion.rollback(() => { conexion.release(); res.status(500).json({ error: 'Error creando venta' }); });
+            const idVenta = resultadoCab.insertId;
+
+            // Procesar items secuencialmente
+            const procesarItem = (index) => {
+              if (index >= items.length) {
+                // actualizar fondos del usuario
+                conexion.query('UPDATE usuarios SET fondos = fondos - ? WHERE id = ?', [total, usuarioSesion.id], (errUpdFondos) => {
+                  if (errUpdFondos) return conexion.rollback(() => { conexion.release(); res.status(500).json({ error: 'Error actualizando fondos' }); });
+                  // vaciar carrito
+                  conexion.query('DELETE FROM carrito WHERE sesion_id = ?', [idSesion], (errDel) => {
+                    if (errDel) return conexion.rollback(() => { conexion.release(); res.status(500).json({ error: 'Error al vaciar carrito' }); });
+                    conexion.commit(errC => {
+                      if (errC) return conexion.rollback(() => { conexion.release(); res.status(500).json({ error: 'Error al confirmar venta' }); });
+                      conexion.release();
+                      res.json({ ok: true, id_venta: idVenta });
                     });
+                  });
                 });
-            });
-          });
+                return;
+              }
 
-          Promise.all(tareas)
-            .then(() => {
-              // Vaciar carrito después de procesar la venta y actualizar stock
-              conexion.query('DELETE FROM carrito WHERE sesion_id = ?', [idSesion], (errDel) => {
-                if (errDel) return conexion.rollback(() => { conexion.release(); res.status(500).json({ error: 'Error al vaciar carrito' }); });
-                conexion.commit(errC => {
-                  if (errC) return conexion.rollback(() => { conexion.release(); res.status(500).json({ error: 'Error al confirmar venta' }); });
-                  conexion.release();
-                  res.json({ ok: true, id_venta: idVenta });
+              const item = items[index];
+              // insertar detalle
+              conexion.query('INSERT INTO ventas_detalle (id_venta, id_producto, nombre, precio, cantidad) VALUES (?, ?, ?, ?, ?)',
+                [idVenta, item.producto_id, item.nombre || '', item.precio, item.cantidad], (errDet) => {
+                  if (errDet) return conexion.rollback(() => { conexion.release(); res.status(500).json({ error: 'Error creando detalle de venta' }); });
+
+                  // Actualizar stock
+                  conexion.query('UPDATE productos SET cantidad = cantidad - ? WHERE id = ? AND cantidad >= ?', [item.cantidad, item.producto_id, item.cantidad], (errUpd, resultUpd) => {
+                    if (errUpd) return conexion.rollback(() => { conexion.release(); res.status(500).json({ error: 'Error actualizando stock' }); });
+                    if (resultUpd.affectedRows === 0) return conexion.rollback(() => { conexion.release(); res.status(400).json({ error: 'Stock insuficiente para ' + item.nombre }); });
+
+                    // Si quedó en 0, eliminar el producto
+                    conexion.query('SELECT cantidad FROM productos WHERE id = ?', [item.producto_id], (errCheck, filasCheck) => {
+                      if (errCheck) return conexion.rollback(() => { conexion.release(); res.status(500).json({ error: 'Error verificando stock' }); });
+                      if (filasCheck.length && Number(filasCheck[0].cantidad) === 0) {
+                        conexion.query('DELETE FROM productos WHERE id = ?', [item.producto_id], (errDelProd) => {
+                          if (errDelProd) return conexion.rollback(() => { conexion.release(); res.status(500).json({ error: 'Error eliminando producto' }); });
+                          procesarItem(index + 1);
+                        });
+                      } else {
+                        procesarItem(index + 1);
+                      }
+                    });
+                  });
                 });
-              });
-            })
-            .catch(errTareas => {
-              console.error('Error en tareas de compra:', errTareas);
-              conexion.rollback(() => { conexion.release(); res.status(500).json({ error: 'Error procesando compra: ' + (errTareas.message || '') }); });
-            });
+            };
+
+            procesarItem(0);
+          });
         });
       });
     });
@@ -378,11 +601,33 @@ app.post('/api/carrito/comprar', (req, res) => {
 
 // Historial de ventas
 app.get('/api/ventas', requireAuth, requireRole('admin'), (req, res) => {
-  pool.query('SELECT id_venta, id_producto, nombre, precio, cantidad, DATE_FORMAT(fecha, "%d/%m/%Y %H:%i:%s") as fecha_formateada FROM ventas ORDER BY id_venta DESC, fecha DESC', (err, filas) => {
-    if (err) {
-      console.error('Error obteniendo ventas:', err);
-      return res.status(500).json({ error: 'Error del servidor' });
-    }
+  // Devolver ventas con detalles agrupadas por cabecera
+  const sql = `SELECT vc.id_venta, vc.usuario_id, u.usuario AS nombre_usuario, vc.total, DATE_FORMAT(vc.fecha, "%d/%m/%Y %H:%i:%s") as fecha
+    FROM ventas_cab vc LEFT JOIN usuarios u ON vc.usuario_id = u.id
+    ORDER BY vc.id_venta DESC, vc.fecha DESC`;
+  pool.query(sql, (err, filas) => {
+    if (err) return res.status(500).json({ error: 'Error del servidor' });
+    res.json(filas);
+  });
+});
+
+// Obtener detalles de una venta específica (admin)
+app.get('/api/ventas/:id', requireAuth, requireRole('admin'), (req, res) => {
+  const id = req.params.id;
+  const sql = `SELECT vd.id, vd.id_venta, vd.id_producto, vd.nombre, vd.precio, vd.cantidad
+    FROM ventas_detalle vd WHERE vd.id_venta = ?`;
+  pool.query(sql, [id], (err, filas) => {
+    if (err) return res.status(500).json({ error: 'Error del servidor' });
+    res.json(filas);
+  });
+});
+
+// Historial de compras del usuario autenticado
+app.get('/api/mis-ventas', requireAuth, (req, res) => {
+  const idUsuario = req.session.usuario.id;
+  const sql = `SELECT vc.id_venta, vc.total, DATE_FORMAT(vc.fecha, "%d/%m/%Y %H:%i:%s") as fecha FROM ventas_cab vc WHERE vc.usuario_id = ? ORDER BY vc.fecha DESC`;
+  pool.query(sql, [idUsuario], (err, filas) => {
+    if (err) return res.status(500).json({ error: 'Error del servidor' });
     res.json(filas);
   });
 });
