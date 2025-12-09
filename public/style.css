@@ -154,6 +154,26 @@ form button[type="submit"]:hover {
     cursor: pointer;
 }
 
+/* Compatibilidad con clases usadas en HTML: .modal-card y .modal-close */
+.modal-card {
+    position: relative;
+    background: #fff;
+    border-radius: 10px;
+    padding: 28px;
+    width: 520px;
+    max-width: 95%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+}
+.modal-card .modal-close {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+}
+
 /* Ajustes responsivos */
 @media (max-width: 600px) {
     h1 { font-size: 2.2em; }
