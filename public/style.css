@@ -190,3 +190,12 @@ form button[type="submit"]:hover {
 }
 
 #form-sucursal input { margin-bottom: 8px; }
+
+/* Badge fijo para mostrar fondos del usuario */
+#user-fondos {
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* Estilos para la sección admin de usuarios */
+#admin-usuarios-section { margin-top: 18px; }

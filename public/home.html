@@ -57,6 +57,8 @@
         <div class="mb-2"><label>Longitud</label><input id="sucursal-lng" class="form-control" placeholder="ej. -58.3816"></div>
         <div><button id="btn-guardar-sucursal" class="btn btn-primary">Agregar sucursal</button></div>
       </div>
+      <!-- Área administrativa: usuarios y gráficos (solo visible a admin) -->
+      <div id="admin-usuarios-section" style="margin-top:18px;"></div>
     </section>
   </main>
 
@@ -91,6 +93,10 @@
   <script src="/auth.js"></script>
   <script src="/main.js"></script>
   <script src="/sucursales.js"></script>
+  <!-- Librerías para administración y generación de PDFs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="/admin_users.js"></script>
   <script>
     // Esperar a que el DOM esté listo
     document.addEventListener('DOMContentLoaded', () => {
@@ -99,7 +105,27 @@
       const intervalo = setInterval(async () => {
         const usuario = await verificarAutenticacion();
         console.log('Intento de verificación:', intentos + 1, usuario);
-        
+        // Mostrar fondos en esquina para usuarios normales
+        if (usuario && usuario.usuario) {
+          // Crear badge si no existe
+          let badge = document.getElementById('user-fondos');
+          if (!badge) {
+            badge = document.createElement('div');
+            badge.id = 'user-fondos';
+            badge.style.position = 'fixed';
+            badge.style.right = '12px';
+            badge.style.bottom = '12px';
+            badge.style.background = 'rgba(0,0,0,0.7)';
+            badge.style.color = '#fff';
+            badge.style.padding = '8px 12px';
+            badge.style.borderRadius = '8px';
+            badge.style.zIndex = '2000';
+            document.body.appendChild(badge);
+          }
+          const fondos = usuario.fondos != null ? Number(usuario.fondos).toFixed(2) : '0.00';
+          badge.textContent = `Fondos: $${fondos}`;
+        }
+
         if (usuario || intentos >= 5) {
           clearInterval(intervalo);
         }

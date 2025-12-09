@@ -187,6 +187,52 @@ document.addEventListener('DOMContentLoaded', () => {
     const datos = await respuesta.json();
     if (!respuesta.ok) return alert(datos.error || 'Error al comprar');
     alert('Compra realizada con éxito');
+    // Generar ticket en PDF usando jsPDF en cliente
+    try {
+      const idVenta = datos.id_venta;
+      // Obtener detalles de la venta
+      const detallesResp = await fetch('/api/ventas/' + idVenta);
+      const detalles = detallesResp.ok ? await detallesResp.json() : [];
+      // Obtener cabecera de mis ventas para hallar fecha y total
+      const cabResp = await fetch('/api/mis-ventas');
+      const cabs = cabResp.ok ? await cabResp.json() : [];
+      const cab = cabs.find(c => Number(c.id_venta) === Number(idVenta)) || null;
+
+      // Generar PDF
+      try {
+        const { jsPDF } = window.jspdf || (await import('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'));
+        const doc = new jsPDF();
+        const negocio = 'La Desesperanza';
+        let y = 14;
+        doc.setFontSize(16);
+        doc.text(negocio, 14, y);
+        doc.setFontSize(11);
+        y += 8;
+        doc.text('Fecha: ' + (cab ? cab.fecha : new Date().toLocaleString()), 14, y);
+        y += 8;
+        doc.text('Número de venta: ' + idVenta, 14, y);
+        y += 10;
+        doc.text('Productos comprados:', 14, y);
+        y += 8;
+        // Tabla simple de productos
+        detalles.forEach(it => {
+          const linea = `${it.nombre} x${it.cantidad}  $${(Number(it.precio)||0).toFixed(2)}`;
+          doc.text(linea, 14, y);
+          y += 7;
+          if (y > 270) { doc.addPage(); y = 20; }
+        });
+        y += 6;
+        doc.setFontSize(12);
+        doc.text('Total: $' + (cab ? Number(cab.total).toFixed(2) : '0.00'), 14, y);
+        // Descargar PDF
+        doc.save('ticket_venta_' + idVenta + '.pdf');
+      } catch (e) {
+        console.error('Error generando PDF:', e);
+      }
+    } catch (e) {
+      console.error('Error generando ticket:', e);
+    }
+
     cargarProductos(); 
     cargarCarrito();
   });

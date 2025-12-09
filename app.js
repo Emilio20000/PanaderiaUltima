@@ -110,6 +110,23 @@ app.delete('/api/usuarios/:id', requireAuth, requireRole('admin'), (req, res) =>
   });
 });
 
+// Admin: establecer fondos de un usuario (valor absoluto, con validación)
+app.put('/api/usuarios/:id/fondos', requireAuth, requireRole('admin'), (req, res) => {
+  const id = req.params.id;
+  const fondos = Number(req.body.fondos);
+  if (isNaN(fondos) || fondos < 0) return res.status(400).json({ error: 'Fondos inválidos' });
+  if (fondos > MAX_FONDOS) return res.status(400).json({ error: 'Fondos exceden el máximo permitido' });
+
+  pool.query('UPDATE usuarios SET fondos = ? WHERE id = ?', [fondos, id], (err, result) => {
+    if (err) {
+      console.error('Error actualizando fondos (admin):', err);
+      return res.status(500).json({ error: 'Error actualizando fondos' });
+    }
+    if (result.affectedRows === 0) return res.status(404).json({ error: 'Usuario no encontrado' });
+    res.json({ ok: true, id: id, fondos: fondos });
+  });
+});
+
 // Registro de nuevo usuario
 app.post('/api/registro', (req, res) => {
   const { usuario, contrasena, email } = req.body;
@@ -273,9 +290,21 @@ app.get('/api/usuario', (req, res) => {
   if (req.session && req.session.autenticado && req.session.usuario) {
     // Renovar la cookie en cada verificación exitosa
     req.session.touch();
-    return res.json({ 
-      usuario: req.session.usuario,
-      autenticado: true
+    // Además de los datos de sesión, intentar traer fondos y email desde la BD
+    const idUsuario = req.session.usuario.id;
+    pool.query('SELECT id, usuario, email, rol, fondos FROM usuarios WHERE id = ?', [idUsuario], (err, filas) => {
+      if (err) {
+        console.error('Error obteniendo datos de usuario en /api/usuario:', err);
+        return res.json({ usuario: req.session.usuario, autenticado: true });
+      }
+      if (filas && filas.length) {
+        const fila = filas[0];
+        // actualizar la sesión con rol si es necesario
+        req.session.usuario = req.session.usuario || {};
+        req.session.usuario.rol = fila.rol || req.session.usuario.rol;
+        return res.json({ usuario: { id: fila.id, usuario: fila.usuario, email: fila.email, rol: fila.rol, fondos: Number(fila.fondos || 0) }, autenticado: true });
+      }
+      return res.json({ usuario: req.session.usuario, autenticado: true });
     });
   }
   return res.status(401).json({ 
