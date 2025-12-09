@@ -40,6 +40,24 @@
         </div>
       </div>
     </div>
+    
+    <hr>
+    <!-- Sucursales -->
+    <section id="seccion-sucursales" class="mb-5">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Nuestras sucursales</h2>
+        <div id="admin-sucursal-actions"></div>
+      </div>
+      <div id="map" style="height: 420px; border-radius:8px; overflow:hidden;"></div>
+      <!-- Formulario admin para agregar sucursales (se muestra solo a admin) -->
+      <div id="form-sucursal" style="display:none; margin-top:12px; max-width:520px;">
+        <h5>Agregar sucursal (Admin)</h5>
+        <div class="mb-2"><label>Nombre</label><input id="sucursal-nombre" class="form-control"></div>
+        <div class="mb-2"><label>Latitud</label><input id="sucursal-lat" class="form-control" placeholder="ej. -34.6037"></div>
+        <div class="mb-2"><label>Longitud</label><input id="sucursal-lng" class="form-control" placeholder="ej. -58.3816"></div>
+        <div><button id="btn-guardar-sucursal" class="btn btn-primary">Agregar sucursal</button></div>
+      </div>
+    </section>
   </main>
 
   <!-- Modal simple para agregar/editar -->
@@ -72,6 +90,7 @@
 
   <script src="/auth.js"></script>
   <script src="/main.js"></script>
+  <script src="/sucursales.js"></script>
   <script>
     // Esperar a que el DOM esté listo
     document.addEventListener('DOMContentLoaded', () => {

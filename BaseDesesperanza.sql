@@ -50,7 +50,6 @@ CREATE TABLE IF NOT EXISTS ventas_cab (
   FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
--- Ventas Detalle
 CREATE TABLE IF NOT EXISTS ventas_detalle (
   id INT AUTO_INCREMENT PRIMARY KEY,
   id_venta INT NOT NULL,
@@ -61,6 +60,15 @@ CREATE TABLE IF NOT EXISTS ventas_detalle (
   FOREIGN KEY (id_venta) REFERENCES ventas_cab(id_venta) ON DELETE CASCADE,
   FOREIGN KEY (id_producto) REFERENCES productos(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
+
+-- Tabla para sucursales (ubicaciones que administra el admin)
+CREATE TABLE IF NOT EXISTS sucursales (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(255) NOT NULL,
+  lat DOUBLE NOT NULL,
+  lng DOUBLE NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 -- Datos iniciales
 INSERT IGNORE INTO usuarios (usuario, contrasena, email, rol, fondos) VALUES 

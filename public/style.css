@@ -180,3 +180,13 @@ form button[type="submit"]:hover {
     form { width: 92%; padding: 22px; }
     .modal { width: 92%; padding: 18px; }
 }
+
+/* Estilos para mapa de sucursales */
+#map {
+    width: 100%;
+    height: 420px;
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+#form-sucursal input { margin-bottom: 8px; }

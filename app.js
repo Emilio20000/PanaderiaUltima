@@ -611,6 +611,32 @@ app.get('/api/ventas', requireAuth, requireRole('admin'), (req, res) => {
   });
 });
 
+// --- Sucursales (lugares físicos) ---
+// Obtener todas las sucursales (público)
+app.get('/api/sucursales', async (req, res) => {
+  pool.query('SELECT id, nombre, lat, lng, created_at FROM sucursales', (err, rows) => {
+    if (err) return res.status(500).json({ error: 'Error al obtener sucursales' });
+    res.json(rows);
+  });
+});
+
+// Agregar sucursal (solo admin)
+app.post('/api/sucursales', requireAuth, requireRole('admin'), (req, res) => {
+  const { nombre, lat, lng } = req.body;
+  if (!nombre || lat == null || lng == null) return res.status(400).json({ error: 'Nombre, lat y lng son requeridos' });
+  const latNum = Number(lat);
+  const lngNum = Number(lng);
+  if (Number.isNaN(latNum) || Number.isNaN(lngNum)) return res.status(400).json({ error: 'Coordenadas inválidas' });
+
+  pool.query('INSERT INTO sucursales (nombre, lat, lng) VALUES (?, ?, ?)', [nombre, latNum, lngNum], (err, result) => {
+    if (err) {
+      console.error('Error insertando sucursal:', err);
+      return res.status(500).json({ error: 'Error al agregar sucursal' });
+    }
+    res.json({ ok: true, id: result.insertId });
+  });
+});
+
 // Obtener detalles de una venta específica (admin)
 app.get('/api/ventas/:id', requireAuth, requireRole('admin'), (req, res) => {
   const id = req.params.id;
