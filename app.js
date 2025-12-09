@@ -636,3 +636,17 @@ app.get('/api/mis-ventas', requireAuth, (req, res) => {
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
+
+// Endpoint temporal para diagnosticar conexión a la base de datos
+app.get('/__test-db', async (req, res) => {
+  try {
+    // Usar la interfaz promise del pool para un manejo más sencillo
+    const p = pool.promise();
+    const [rows] = await p.query('SELECT NOW() as now');
+    return res.json({ ok: true, now: rows[0].now, db: { host: process.env.DB_HOST || 'sql5.freesqldatabase.com', user: process.env.DB_USER || 'sql5811038' } });
+  } catch (err) {
+    console.error('Error comprobando conexión DB (endpoint /__test-db):', err);
+    // Devolver información limitada del error para ayudar al diagnóstico
+    return res.status(500).json({ ok: false, error: err.message, code: err.code });
+  }
+});
