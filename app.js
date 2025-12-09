@@ -651,21 +651,33 @@ app.get('/api/sucursales', async (req, res) => {
 });
 
 // Agregar sucursal (solo admin)
+// Agregar sucursal (solo admin)
 app.post('/api/sucursales', requireAuth, requireRole('admin'), (req, res) => {
   const { nombre, lat, lng } = req.body;
-  if (!nombre || lat == null || lng == null) return res.status(400).json({ error: 'Nombre, lat y lng son requeridos' });
+  if (!nombre || lat == null || lng == null) 
+    return res.status(400).json({ error: 'Nombre, lat y lng son requeridos' });
+
   const latNum = Number(lat);
   const lngNum = Number(lng);
-  if (Number.isNaN(latNum) || Number.isNaN(lngNum)) return res.status(400).json({ error: 'Coordenadas inválidas' });
+  if (Number.isNaN(latNum) || Number.isNaN(lngNum)) 
+    return res.status(400).json({ error: 'Coordenadas inválidas' });
 
-  pool.query('INSERT INTO sucursales (nombre, lat, lng) VALUES (?, ?, ?)', [nombre, latNum, lngNum], (err, result) => {
-    if (err) {
-      console.error('Error insertando sucursal:', err);
-      return res.status(500).json({ error: 'Error al agregar sucursal' });
+  // Imagen por defecto: TU LINK
+  const imagenDefault = "https://chatgpt.com/backend-api/estuary/content?id=file_00000000b40c71f880adff5434d2f7ad&ts=490365&p=fs&cid=1&sig=28d2a7548d18e0adf1056f087b77065e77c16a6be556bfee6b6590d86850b030&v=0";
+
+  pool.query(
+    'INSERT INTO sucursales (nombre, lat, lng, imagen) VALUES (?, ?, ?, ?)',
+    [nombre, latNum, lngNum, imagenDefault],
+    (err, result) => {
+      if (err) {
+        console.error('Error insertando sucursal:', err);
+        return res.status(500).json({ error: 'Error al agregar sucursal' });
+      }
+      res.json({ ok: true, id: result.insertId });
     }
-    res.json({ ok: true, id: result.insertId });
-  });
+  );
 });
+
 
 // Obtener detalles de una venta específica (admin)
 app.get('/api/ventas/:id', requireAuth, requireRole('admin'), (req, res) => {
