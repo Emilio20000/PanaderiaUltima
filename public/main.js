@@ -54,6 +54,28 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (e) {
         console.warn('No se pudo insertar enlace admin en header:', e);
       }
+
+      // También mostrar botón dentro de la sección de sucursales para abrir admin users (más visible)
+      try {
+        const acciones = document.getElementById('admin-sucursal-actions');
+        if (acciones) {
+          let btnGestion = document.getElementById('btn-gestion-usuarios');
+          if (esAdmin) {
+            if (!btnGestion) {
+              btnGestion = document.createElement('a');
+              btnGestion.id = 'btn-gestion-usuarios';
+              btnGestion.href = '/admin.html';
+              btnGestion.className = 'btn btn-sm btn-secondary';
+              btnGestion.textContent = 'Gestionar usuarios';
+              acciones.appendChild(btnGestion);
+            }
+          } else {
+            if (btnGestion) btnGestion.remove();
+          }
+        }
+      } catch (e) {
+        console.warn('No se pudo insertar boton gestionar usuarios:', e);
+      }
       
       return true;
     } catch (error) {
