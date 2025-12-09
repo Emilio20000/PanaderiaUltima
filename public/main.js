@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
             navAdmin.id = 'nav-admin-panel';
             navAdmin.href = '/admin.html';
             navAdmin.className = 'btn btn-outline-light btn-sm me-2';
-            navAdmin.textContent = 'Estadisticas';
+            navAdmin.textContent = 'Estadísticas';
             const headerDiv = document.querySelector('header div');
             if (headerDiv) headerDiv.insertBefore(navAdmin, headerDiv.firstChild);
           }
@@ -54,22 +54,10 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const acciones = document.getElementById('admin-sucursal-actions');
         if (acciones) {
-          let btnEstadisticas = document.getElementById('btn-estadisticas-admin');
-          if (esAdmin) {
-            if (!btnEstadisticas) {
-              btnEstadisticas = document.createElement('a');
-              btnEstadisticas.id = 'btn-estadisticas-admin';
-              btnEstadisticas.href = '/admin.html';
-              btnEstadisticas.className = 'btn btn-sm btn-info';
-              btnEstadisticas.textContent = 'Estadísticas';
-              acciones.appendChild(btnEstadisticas);
-            }
-          } else {
-            if (btnEstadisticas) btnEstadisticas.remove();
-          }
+          // No mostrar botón de estadísticas aquí
         }
       } catch (e) {
-        console.warn('No se pudo insertar botón estadísticas:', e);
+        console.warn('No se pudo procesar acciones de admin:', e);
       }
       
       return true;
