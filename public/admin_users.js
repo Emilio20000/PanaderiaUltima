@@ -3,37 +3,49 @@ document.addEventListener('DOMContentLoaded', () => {
   const adminSectionContainer = document.getElementById('admin-usuarios-section');
   if (!adminSectionContainer) return;
 
-  const container = document.createElement('div');
-  container.innerHTML = `
-    <h3>Gestión de Usuarios</h3>
-    <div id="usuarios-table" class="mb-3"></div>
-    <div class="row">
-      <div class="col-md-6">
-        <h5>Distribución de fondos</h5>
-        <canvas id="chart-fondos" height="200"></canvas>
-      </div>
-      <div class="col-md-6">
-        <h5>Top balances</h5>
-        <canvas id="chart-top" height="200"></canvas>
-      </div>
-    </div>
-  `;
-  adminSectionContainer.appendChild(container);
-
-  let usuarios = [];
-
-  async function cargarUsuarios() {
-    try {
-      const res = await fetch('/api/usuarios');
-      if (!res.ok) throw new Error('No autorizado o error fetching');
-      usuarios = await res.json();
-      renderTabla();
-      renderGraficos();
-    } catch (e) {
-      adminSectionContainer.innerHTML = '<div class="alert alert-danger">Necesitas ser admin para ver esta sección.</div>';
-      console.error(e);
+  // Esperar a que la autenticación esté resuelta y comprobar rol
+  (async () => {
+    const usuario = await window.verificarAutenticacion();
+    if (!usuario) {
+      adminSectionContainer.innerHTML = '<div class="alert alert-danger">No autenticado.</div>';
+      return;
     }
-  }
+    if (usuario.rol !== 'admin' && usuario.usuario !== 'admin') {
+      adminSectionContainer.innerHTML = '<div class="alert alert-warning">Sección de administración (solo visible para admin).</div>';
+      return;
+    }
+
+    const container = document.createElement('div');
+    container.innerHTML = `
+      <h3>Gestión de Usuarios</h3>
+      <div id="usuarios-table" class="mb-3"></div>
+      <div class="row">
+        <div class="col-md-6">
+          <h5>Distribución de fondos</h5>
+          <canvas id="chart-fondos" height="200"></canvas>
+        </div>
+        <div class="col-md-6">
+          <h5>Top balances</h5>
+          <canvas id="chart-top" height="200"></canvas>
+        </div>
+      </div>
+    `;
+    adminSectionContainer.appendChild(container);
+
+    let usuarios = [];
+
+    async function cargarUsuarios() {
+      try {
+        const res = await fetch('/api/usuarios');
+        if (!res.ok) throw new Error('No autorizado o error fetching');
+        usuarios = await res.json();
+        renderTabla();
+        renderGraficos();
+      } catch (e) {
+        adminSectionContainer.innerHTML = '<div class="alert alert-danger">Necesitas ser admin para ver esta sección.</div>';
+        console.error(e);
+      }
+    }
 
   function renderTabla() {
     const div = document.getElementById('usuarios-table');

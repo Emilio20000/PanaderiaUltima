@@ -190,13 +190,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Generar ticket en PDF usando jsPDF en cliente
     try {
       const idVenta = datos.id_venta;
-      // Obtener detalles de la venta
-      const detallesResp = await fetch('/api/ventas/' + idVenta);
-      const detalles = detallesResp.ok ? await detallesResp.json() : [];
-      // Obtener cabecera de mis ventas para hallar fecha y total
-      const cabResp = await fetch('/api/mis-ventas');
-      const cabs = cabResp.ok ? await cabResp.json() : [];
-      const cab = cabs.find(c => Number(c.id_venta) === Number(idVenta)) || null;
+      // Obtener detalles de la venta (endpoint para el propietario)
+      const detallesResp = await fetch('/api/mis-ventas/' + idVenta);
+      const detallesJson = detallesResp.ok ? await detallesResp.json() : null;
+      const detalles = detallesJson && detallesJson.detalles ? detallesJson.detalles : [];
+      const cab = detallesJson && detallesJson.cab ? detallesJson.cab : null;
 
       // Generar PDF
       try {

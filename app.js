@@ -677,6 +677,30 @@ app.get('/api/ventas/:id', requireAuth, requireRole('admin'), (req, res) => {
   });
 });
 
+// Obtener detalles de una venta específica para el comprador (propietario) o admin
+app.get('/api/mis-ventas/:id', requireAuth, (req, res) => {
+  const id = req.params.id;
+  const usuarioId = req.session.usuario && req.session.usuario.id;
+  if (!usuarioId) return res.status(401).json({ error: 'No autenticado' });
+
+  // Comprobar que la venta pertenece al usuario
+  pool.query('SELECT usuario_id, total, fecha FROM ventas_cab WHERE id_venta = ?', [id], (errCab, filasCab) => {
+    if (errCab) return res.status(500).json({ error: 'Error del servidor' });
+    if (!filasCab || filasCab.length === 0) return res.status(404).json({ error: 'Venta no encontrada' });
+    const cab = filasCab[0];
+    // Si no es admin y el usuario no es propietario, denegar
+    if ((req.session.usuario && req.session.usuario.rol !== 'admin') && Number(cab.usuario_id) !== Number(usuarioId)) {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+
+    // Obtener detalles
+    pool.query('SELECT id, id_venta, id_producto, nombre, precio, cantidad FROM ventas_detalle WHERE id_venta = ?', [id], (errDet, filasDet) => {
+      if (errDet) return res.status(500).json({ error: 'Error del servidor' });
+      return res.json({ cab: cab, detalles: filasDet });
+    });
+  });
+});
+
 // Historial de compras del usuario autenticado
 app.get('/api/mis-ventas', requireAuth, (req, res) => {
   const idUsuario = req.session.usuario.id;
