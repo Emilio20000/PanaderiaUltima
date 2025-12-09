@@ -25,35 +25,49 @@
             <input type="checkbox" id="mostrar">
             <label for="mostrar">Mostrar Contraseña</label>
         </div>
+        <!-- Panel compacto de registro (dentro del formulario de login) -->
+        <div id="registro-panel" style="display:none; width:100%; margin-top:10px;">
+            <label style="font-weight:bold;">Crear cuenta (rápido)</label>
+            <input type="text" id="usuario_reg_compact" placeholder="Usuario (3+)" style="width:100%; padding:8px; margin-top:6px;" />
+            <input type="email" id="email_reg_compact" placeholder="correo@gmail.com" style="width:100%; padding:8px; margin-top:6px;" />
+            <input type="password" id="contrasena_reg_compact" placeholder="Contraseña (6+)" style="width:100%; padding:8px; margin-top:6px;" />
+            <div style="display:flex; gap:8px; margin-top:8px;">
+                <button type="button" id="registrar_compact" style="flex:1; padding:8px;">Registrarse</button>
+                <button type="button" id="cerrar_registro_compact" style="flex:1; padding:8px; background:#f5f5f5; border:1px solid #ddd;">Cerrar</button>
+            </div>
+        </div>
 
         <button type="submit" id="enviar">Iniciar Sesión</button>
     </form>
-        
-        <div style="text-align: center; margin-top: 15px;">
-            <p style="margin: 0; font-size: 14px; color: #666;">¿No tienes cuenta?</p>
-            <button type="button" id="btn-registro" style="background: none; border: none; color: #0066cc; cursor: pointer; font-weight: bold; text-decoration: underline; padding: 5px 0;">Registrarse aquí</button>
+
+        <div style="text-align: center; margin-top: 12px;">
+            <p style="margin: 0; font-size: 13px; color: #666; display:inline-block; margin-right:6px;">¿No tienes cuenta?</p>
+            <button type="button" id="btn-registro" style="background: none; border: none; color: #0066cc; cursor: pointer; font-weight: bold; text-decoration: underline; padding: 2px 6px; font-size:13px;">Registrarse aquí</button>
         </div>
     
-    <!-- Formulario de registro (solo usuarios normales, email @gmail.com requerido) -->
-    <!-- Formulario de Registro (visible por defecto, ubicado debajo del login) -->
-    <form id="registro-form">
-            <img src="./images/user.jpg" alt="imagen-usuario">
-            <h2 style="margin-top: 0; text-align: center; color: #8B5A3C;">Crear Cuenta</h2>
-            <label for="usuario_reg">Usuario</label>
-            <input type="text" id="usuario_reg" placeholder="Mínimo 3 caracteres" required>
-            <label for="email_reg">Correo (gmail.com)</label>
-            <input type="email" id="email_reg" placeholder="usuario@gmail.com" required>
-            <label for="contrasena_reg">Contraseña</label>
-            <input type="password" id="contrasena_reg" placeholder="Mínimo 6 caracteres" required>
-            <button type="submit" id="registrar" style="margin-bottom: 10px;">Registrarse</button>
-            
-            <div style="text-align: center;">
-                <p style="margin: 0; font-size: 14px; color: #666;">¿Ya tienes cuenta?</p>
-                <button type="button" id="btn-login" style="background: none; border: none; color: #0066cc; cursor: pointer; font-weight: bold; text-decoration: underline; padding: 5px 0;">Inicia sesión aquí</button>
-            </div>
-        </form>
+    <!-- (Registro compacto integrado; el formulario completo fue movido a un panel compacto) -->
 
     </div>
+        <!-- Modal de registro (se abre al pulsar Registrarse aquí) -->
+        <div id="registro-modal" class="modal-overlay" aria-hidden="true">
+            <div class="modal-card">
+                <button class="modal-close" id="cerrar_modal" aria-label="Cerrar">✕</button>
+                <h2>Crear Cuenta</h2>
+                <div class="small-note">Rápido y seguro</div>
+                <form id="registro-form-modal">
+                    <label for="usuario_reg_modal">Usuario</label>
+                    <input type="text" id="usuario_reg_modal" placeholder="Usuario (3+)" required />
+                    <label for="email_reg_modal">Correo (@gmail.com)</label>
+                    <input type="email" id="email_reg_modal" placeholder="usuario@gmail.com" required />
+                    <label for="contrasena_reg_modal">Contraseña</label>
+                    <input type="password" id="contrasena_reg_modal" placeholder="Contraseña (6+)" required />
+                    <div class="actions">
+                        <button type="submit" id="registrar_modal" style="flex:1; padding:10px; background:#198de6; color:white; border:none; border-radius:5px;">Registrarse</button>
+                        <button type="button" id="cancelar_modal" style="flex:1; padding:10px; background:#f5f5f5; border:1px solid #ddd; border-radius:5px;">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     <script src="./login.js"></script>
     <script src="./register.js"></script>
 </body>
