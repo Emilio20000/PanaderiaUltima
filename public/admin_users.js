@@ -138,4 +138,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Cargar al inicio
   cargarUsuarios();
+})();
 });

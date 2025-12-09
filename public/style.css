@@ -15,6 +15,32 @@ body.home-page {
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
+    background-color: #f0f2f5;
+    padding: 0;
+}
+
+body.home-page > * {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    margin: 20px;
+    padding: 30px;
+    width: 100%;
+    max-width: 1400px;
+}
+
+body.home-page header {
+    background: rgba(33, 37, 41, 0.95);
+    border-radius: 12px 12px 0 0;
+    margin: 20px 20px 0 20px;
+    padding: 16px 30px;
+}
+
+body.home-page main {
+    background: white;
+    border-radius: 0 0 12px 12px;
+    margin: 0 20px 20px 20px;
+    padding: 30px;
 }
 
 h1 {
