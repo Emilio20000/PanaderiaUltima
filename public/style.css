@@ -12,13 +12,29 @@ body {
     padding: 20px; /* Añadir un poco de espacio si la pantalla es pequeña */
 }
 
+/* Header a todo ancho con caja centrada internamente */
+.site-header {
+    width: 100%;
+    background: #222; /* color del recuadro */
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+.site-header__inner {
+    max-width: 1100px; /* ancho del contenido centrado */
+    margin: 0 auto;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 /* Estilo del Título de la Panadería */
 h1 {
     color: #5d4037; /* Color temático de panadería o chocolate */
-    margin-bottom: 0; /* Ya tienes br, pero es buena práctica resetearlo */
+    margin: 0;
     font-size: 2.2em;
     text-align: center;
     text-transform: uppercase;
+    letter-spacing: 2px;
 }
 
 /* Estilo del Formulario (Contenedor Principal) */
