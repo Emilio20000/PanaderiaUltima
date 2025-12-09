@@ -1,29 +1,20 @@
-// Script para que usuarios normales añadan fondos a su cuenta
 document.addEventListener('DOMContentLoaded', async () => {
-  // Verificar autenticación y rol del usuario
   try {
     const response = await fetch('/api/usuario');
     if (!response.ok) {
-      // No autenticado, ocultar sección de fondos
       document.getElementById('fondos-section').style.display = 'none';
       return;
     }
     
     const usuario = await response.json();
     
-    // Si es admin, ocultar sección de fondos (admin ve estadísticas en admin.html)
     if (usuario.rol === 'admin') {
       document.getElementById('fondos-section').style.display = 'none';
       return;
     }
     
-    // Mostrar sección de fondos para usuarios normales
     document.getElementById('fondos-section').style.display = 'block';
-    
-    // Cargar fondos actuales
     actualizarFondos();
-    
-    // Event listener para botón "Sumar fondos"
     document.getElementById('btn-sumar-fondos').addEventListener('click', sumarFondos);
     
   } catch (error) {
@@ -43,7 +34,6 @@ async function sumarFondos() {
   const inputCantidad = document.getElementById('input-cantidad-fondos');
   const cantidad = parseFloat(inputCantidad.value);
   
-  // Validaciones
   if (isNaN(cantidad) || cantidad <= 0) {
     alert('Por favor ingresa una cantidad válida');
     return;
@@ -65,15 +55,10 @@ async function sumarFondos() {
       inputCantidad.value = '';
       alert('Fondos añadidos exitosamente');
       
-      // Obtener fondos actualizados del servidor
       const usuarioResponse = await fetch('/api/usuario');
       if (usuarioResponse.ok) {
         const usuario = await usuarioResponse.json();
-        
-        // Actualizar sección de fondos
         actualizarFondos();
-        
-        // Actualizar badge en el DOM
         actualizarBadgeFondos(usuario.fondos);
       }
     } else {

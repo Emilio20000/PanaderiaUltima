@@ -1,6 +1,4 @@
-// Frontend para home.html: carga productos, carrito y CRUD básico para admin
 document.addEventListener('DOMContentLoaded', () => {
-  // Elementos DOM
   const galeria = document.getElementById('galeria');
   const listaCarrito = document.getElementById('lista-carrito');
   const seccionCarrito = document.getElementById('seccion-carrito');
@@ -23,7 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
         throw new Error('No autenticado');
       }
       
-      console.log('Usuario verificado:', usuario);
       esAdmin = usuario.rol === 'admin' || usuario.usuario === 'admin';
       
       const btnAgregar = document.getElementById('btn-agregar');
@@ -35,7 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
         seccionCarrito.style.display = esAdmin ? 'none' : 'block';
       }
       
-      // Agregar enlace rápido al panel admin en el header
       try {
         let navAdmin = document.getElementById('nav-admin-panel');
         if (esAdmin) {
@@ -55,7 +51,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('No se pudo insertar enlace admin en header:', e);
       }
 
-      // Mostrar botón de estadísticas para admin en la sección de sucursales
       try {
         const acciones = document.getElementById('admin-sucursal-actions');
         if (acciones) {
@@ -87,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function cargarProductos() {
     const respuesta = await fetch('/api/productos');
     const productos = await respuesta.json();
-    productosDisponibles = productos; // Guardar para referencia
+    productosDisponibles = productos;
     galeria.innerHTML = '';
     productos.forEach(producto => {
       const tarjeta = document.createElement('div');
@@ -106,19 +101,16 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         ` : ''}
       `;
-      // controles de administrador
       if (esAdmin) {
         const filaAdmin = document.createElement('div');
         filaAdmin.className = 'mt-2 d-flex gap-1';
         filaAdmin.innerHTML = `<button class="btn btn-sm btn-warning btn-editar">Editar</button><button class="btn btn-sm btn-danger btn-borrar">Borrar</button>`;
         tarjeta.appendChild(filaAdmin);
       }
-      // eventos
       if (!esAdmin) {
         const inputCantidad = tarjeta.querySelector('.entrada-cantidad');
         const btnAgregar = tarjeta.querySelector('.btn-agregar');
         
-        // Actualizar estado del botón según disponibilidad
         const actualizarEstadoBoton = () => {
           const cantidadSeleccionada = Number(inputCantidad.value || 0);
           const disponible = Number(producto.cantidad || 0);
@@ -143,11 +135,9 @@ document.addEventListener('DOMContentLoaded', () => {
           const datos = await respuesta.json();
           if (!respuesta.ok) return alert(datos.error || 'Error al agregar');
           
-          // Actualizar cantidad disponible localmente
           producto.cantidad -= cantidad;
           actualizarEstadoBoton();
           
-          // Actualizar la visualización de cantidad disponible
           const cantidadElement = tarjeta.querySelector('p:nth-child(3)');
           cantidadElement.textContent = `Disponible después de realizar la compra: ${producto.cantidad}`;
           await cargarCarrito();
@@ -208,7 +198,6 @@ document.addEventListener('DOMContentLoaded', () => {
       totalCarrito.textContent = total.toFixed(2);
     }
 
-    // Actualizar estado del botón comprar
     btnComprar.disabled = items.length === 0;
   }
 
@@ -229,16 +218,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const datos = await respuesta.json();
     if (!respuesta.ok) return alert(datos.error || 'Error al comprar');
     alert('Compra realizada con éxito');
-    // Generar ticket en PDF usando jsPDF en cliente
     try {
       const idVenta = datos.id_venta;
-      // Obtener detalles de la venta (endpoint para el propietario)
       const detallesResp = await fetch('/api/mis-ventas/' + idVenta);
       const detallesJson = detallesResp.ok ? await detallesResp.json() : null;
       const detalles = detallesJson && detallesJson.detalles ? detallesJson.detalles : [];
       const cab = detallesJson && detallesJson.cab ? detallesJson.cab : null;
 
-      // Generar PDF
       try {
         const { jsPDF } = window.jspdf || (await import('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'));
         const doc = new jsPDF();
@@ -254,7 +240,6 @@ document.addEventListener('DOMContentLoaded', () => {
         y += 10;
         doc.text('Productos comprados:', 14, y);
         y += 8;
-        // Tabla simple de productos
         detalles.forEach(it => {
           const linea = `${it.nombre} x${it.cantidad}  $${(Number(it.precio)||0).toFixed(2)}`;
           doc.text(linea, 14, y);
@@ -264,7 +249,6 @@ document.addEventListener('DOMContentLoaded', () => {
         y += 6;
         doc.setFontSize(12);
         doc.text('Total: $' + (cab ? Number(cab.total).toFixed(2) : '0.00'), 14, y);
-        // Descargar PDF
         doc.save('ticket_venta_' + idVenta + '.pdf');
       } catch (e) {
         console.error('Error generando PDF:', e);
@@ -277,7 +261,6 @@ document.addEventListener('DOMContentLoaded', () => {
     cargarCarrito();
   });
 
-  // Función global para eliminar del carrito
   window.eliminarDelCarrito = async function(idProducto) {
     try {
       const respuesta = await fetch('/api/carrito/eliminar', {
@@ -288,9 +271,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const datos = await respuesta.json();
       if (!respuesta.ok) throw new Error(datos.error || 'Error al eliminar del carrito');
       
-      // Actualizar la visualización
       await cargarCarrito();
-      await cargarProductos(); // Recargar productos para actualizar cantidades disponibles
+      await cargarProductos();
     } catch (error) {
       alert(error.message);
     }
@@ -314,6 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('producto-temporada').value = producto ? producto.temporada : 'normal';
     modal.style.display = 'block';
   }
+  
   function cerrarVentanaModal() { modal.style.display = 'none'; }
 
   formularioProducto.addEventListener('submit', async (e) => {
@@ -326,7 +309,6 @@ document.addEventListener('DOMContentLoaded', () => {
       cantidad: Number(document.getElementById('producto-cantidad').value),
       temporada: document.getElementById('producto-temporada').value
     };
-    // validación básica
     if (!datos.nombre || !datos.url_imagen || !datos.precio || datos.cantidad == null) return alert('Campos incompletos');
     const metodo = id ? 'PUT' : 'POST';
     const url = id ? '/api/productos/' + id : '/api/productos';
@@ -337,6 +319,5 @@ document.addEventListener('DOMContentLoaded', () => {
     cerrarVentanaModal(); cargarProductos();
   });
 
-  // inicializar
   (async () => { await verificarUsuario(); await cargarProductos(); await cargarCarrito(); })();
 });
