@@ -42,6 +42,20 @@
     </div>
     
     <hr>
+    <!-- Mis fondos (solo para usuarios normales) -->
+    <section id="fondos-section" style="display:none; margin-bottom:30px; max-width:500px;">
+      <h3>Mis fondos</h3>
+      <div class="mb-3">
+        <p class="text-muted">Fondos actuales: <strong id="fondos-actuales">$0.00</strong></p>
+      </div>
+      <div class="input-group">
+        <input type="number" id="input-cantidad-fondos" class="form-control" placeholder="Cantidad a añadir" min="0.01" step="0.01">
+        <button class="btn btn-primary" id="btn-sumar-fondos">Sumar fondos</button>
+      </div>
+      <small class="text-muted d-block mt-2">Máximo permitido: $999,999,999,999</small>
+    </section>
+
+    <hr>
     <!-- Sucursales -->
     <section id="seccion-sucursales" class="mb-5">
       <div class="d-flex justify-content-between align-items-center mb-3">
@@ -96,7 +110,7 @@
   <!-- Librerías para administración y generación de PDFs -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="/admin_users.js"></script>
+  <script src="/add_fondos.js"></script>
   <script>
     // Esperar a que el DOM esté listo
     document.addEventListener('DOMContentLoaded', () => {

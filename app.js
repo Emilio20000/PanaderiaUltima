@@ -306,6 +306,7 @@ app.get('/api/usuario', (req, res) => {
       }
       return res.json({ usuario: req.session.usuario, autenticado: true });
     });
+    return;
   }
   return res.status(401).json({ 
     error: 'No autenticado',
@@ -708,6 +709,23 @@ app.get('/api/mis-ventas', requireAuth, (req, res) => {
   pool.query(sql, [idUsuario], (err, filas) => {
     if (err) return res.status(500).json({ error: 'Error del servidor' });
     res.json(filas);
+  });
+});
+
+// Estadísticas: ventas por producto (public para admin)
+app.get('/api/estadisticas/ventas-por-producto', requireAuth, requireRole('admin'), (req, res) => {
+  const sql = `
+    SELECT vd.nombre, SUM(vd.cantidad) as total_vendido
+    FROM ventas_detalle vd
+    GROUP BY vd.nombre
+    ORDER BY total_vendido DESC
+  `;
+  pool.query(sql, (err, filas) => {
+    if (err) {
+      console.error('Error obteniendo estadísticas:', err);
+      return res.status(500).json({ error: 'Error del servidor' });
+    }
+    res.json(filas || []);
   });
 });
 

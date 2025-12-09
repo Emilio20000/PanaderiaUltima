@@ -35,16 +35,16 @@ document.addEventListener('DOMContentLoaded', () => {
         seccionCarrito.style.display = esAdmin ? 'none' : 'block';
       }
       
-      // Agregar enlace rápido a la sección de admin (usuarios) en el header
+      // Agregar enlace rápido al panel admin en el header
       try {
-        let navAdmin = document.getElementById('nav-admin-users');
+        let navAdmin = document.getElementById('nav-admin-panel');
         if (esAdmin) {
           if (!navAdmin) {
             navAdmin = document.createElement('a');
-            navAdmin.id = 'nav-admin-users';
+            navAdmin.id = 'nav-admin-panel';
             navAdmin.href = '/admin.html';
             navAdmin.className = 'btn btn-outline-light btn-sm me-2';
-            navAdmin.textContent = 'Admin - Usuarios';
+            navAdmin.textContent = 'Admin';
             const headerDiv = document.querySelector('header div');
             if (headerDiv) headerDiv.insertBefore(navAdmin, headerDiv.firstChild);
           }
@@ -55,26 +55,26 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('No se pudo insertar enlace admin en header:', e);
       }
 
-      // También mostrar botón dentro de la sección de sucursales para abrir admin users (más visible)
+      // Mostrar botón de estadísticas para admin en la sección de sucursales
       try {
         const acciones = document.getElementById('admin-sucursal-actions');
         if (acciones) {
-          let btnGestion = document.getElementById('btn-gestion-usuarios');
+          let btnEstadisticas = document.getElementById('btn-estadisticas-admin');
           if (esAdmin) {
-            if (!btnGestion) {
-              btnGestion = document.createElement('a');
-              btnGestion.id = 'btn-gestion-usuarios';
-              btnGestion.href = '/admin.html';
-              btnGestion.className = 'btn btn-sm btn-secondary';
-              btnGestion.textContent = 'Gestionar usuarios';
-              acciones.appendChild(btnGestion);
+            if (!btnEstadisticas) {
+              btnEstadisticas = document.createElement('a');
+              btnEstadisticas.id = 'btn-estadisticas-admin';
+              btnEstadisticas.href = '/admin.html';
+              btnEstadisticas.className = 'btn btn-sm btn-info';
+              btnEstadisticas.textContent = 'Estadísticas';
+              acciones.appendChild(btnEstadisticas);
             }
           } else {
-            if (btnGestion) btnGestion.remove();
+            if (btnEstadisticas) btnEstadisticas.remove();
           }
         }
       } catch (e) {
-        console.warn('No se pudo insertar boton gestionar usuarios:', e);
+        console.warn('No se pudo insertar botón estadísticas:', e);
       }
       
       return true;
