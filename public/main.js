@@ -35,6 +35,26 @@ document.addEventListener('DOMContentLoaded', () => {
         seccionCarrito.style.display = esAdmin ? 'none' : 'block';
       }
       
+      // Agregar enlace rápido a la sección de admin (usuarios) en el header
+      try {
+        let navAdmin = document.getElementById('nav-admin-users');
+        if (esAdmin) {
+          if (!navAdmin) {
+            navAdmin = document.createElement('a');
+            navAdmin.id = 'nav-admin-users';
+            navAdmin.href = '/admin.html';
+            navAdmin.className = 'btn btn-outline-light btn-sm me-2';
+            navAdmin.textContent = 'Admin - Usuarios';
+            const headerDiv = document.querySelector('header div');
+            if (headerDiv) headerDiv.insertBefore(navAdmin, headerDiv.firstChild);
+          }
+        } else {
+          if (navAdmin) navAdmin.remove();
+        }
+      } catch (e) {
+        console.warn('No se pudo insertar enlace admin en header:', e);
+      }
+      
       return true;
     } catch (error) {
       console.error('Error en verificarUsuario:', error);
