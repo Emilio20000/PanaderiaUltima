@@ -2,23 +2,24 @@
 body {
     font-family: Arial, sans-serif;
     background-color: #f0f2f5;
-    /* Usamos flexbox para centrar todo el contenido del body (título y formulario) */
+    /* Mantener el contenido centrado horizontalmente y ponerlo más cerca del top */
     display: flex;
     flex-direction: column; /* Coloca los elementos (h1, br, form) verticalmente */
-    justify-content: center; /* Centrar verticalmente */
+    justify-content: flex-start; /* Empezar desde el top para colocar título arriba */
     align-items: center; /* Centrar horizontalmente */
     min-height: 100vh;
     margin: 0;
-    padding: 20px; /* Añadir un poco de espacio si la pantalla es pequeña */
+    padding: 40px 20px; /* Espacio superior mayor para separar título del borde */
 }
 
 /* Estilo del Título de la Panadería */
 h1 {
     color: #5d4037; /* Color temático de panadería o chocolate */
-    margin-bottom: 0; /* Ya tienes br, pero es buena práctica resetearlo */
-    font-size: 2.2em;
+    margin: 0 0 24px 0; /* Separación inferior mayor */
+    font-size: 3em; /* Texto más grande como en la maqueta */
     text-align: center;
     text-transform: uppercase;
+    letter-spacing: 2px;
 }
 
 /* Estilo del Formulario (Contenedor Principal) */
@@ -26,11 +27,13 @@ form {
     background: white;
     padding: 30px;
     border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    width: 300px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+    width: 420px; /* Más ancho como en la captura */
+    max-width: 95%;
     display: flex;
     flex-direction: column;
     align-items: center; 
+    margin-top: 10px;
 }
 
 /* Imagen de Usuario */
@@ -103,4 +106,57 @@ form button[type="submit"] {
 
 form button[type="submit"]:hover {
     background-color: #198de6;
+}
+
+/* Enlace de registro centrado debajo del formulario */
+.register-text {
+    text-align: center;
+    margin-top: 14px;
+    color: #666;
+}
+.register-text a {
+    color: #0b74d1;
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+/* Estilos para modal de registro (overlay + caja) */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: none; /* visible solo cuando se activa */
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+    position: relative;
+    background: #fff;
+    border-radius: 10px;
+    padding: 28px;
+    width: 520px;
+    max-width: 95%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+}
+.modal .modal-header {
+    text-align: center;
+    margin-bottom: 14px;
+}
+.modal .close-btn {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+/* Ajustes responsivos */
+@media (max-width: 600px) {
+    h1 { font-size: 2.2em; }
+    form { width: 92%; padding: 22px; }
+    .modal { width: 92%; padding: 18px; }
 }
