@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
             navAdmin.id = 'nav-admin-panel';
             navAdmin.href = '/admin.html';
             navAdmin.className = 'btn btn-outline-light btn-sm me-2';
-            navAdmin.textContent = 'Admin';
+            navAdmin.textContent = 'Estadisticas';
             const headerDiv = document.querySelector('header div');
             if (headerDiv) headerDiv.insertBefore(navAdmin, headerDiv.firstChild);
           }

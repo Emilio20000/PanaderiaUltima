@@ -32,6 +32,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
+function actualizarBadgeFondos(fondos) {
+  let badge = document.getElementById('user-fondos');
+  if (badge) {
+    badge.textContent = `Fondos: $${Number(fondos).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+}
+
 async function sumarFondos() {
   const inputCantidad = document.getElementById('input-cantidad-fondos');
   const cantidad = parseFloat(inputCantidad.value);
@@ -57,12 +64,17 @@ async function sumarFondos() {
     if (response.ok) {
       inputCantidad.value = '';
       alert('Fondos añadidos exitosamente');
-      actualizarFondos();
-      // Actualizar badge en el DOM (si existe)
-      const badgeFondos = document.querySelector('[id="badge-fondos"]');
-      if (badgeFondos) {
-        const usuario = await fetch('/api/usuario').then(r => r.json());
-        badgeFondos.textContent = `$${usuario.fondos.toLocaleString('es-MX')}`;
+      
+      // Obtener fondos actualizados del servidor
+      const usuarioResponse = await fetch('/api/usuario');
+      if (usuarioResponse.ok) {
+        const usuario = await usuarioResponse.json();
+        
+        // Actualizar sección de fondos
+        actualizarFondos();
+        
+        // Actualizar badge en el DOM
+        actualizarBadgeFondos(usuario.fondos);
       }
     } else {
       const error = await response.json();

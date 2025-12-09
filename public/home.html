@@ -136,8 +136,8 @@
             badge.style.zIndex = '2000';
             document.body.appendChild(badge);
           }
-          const fondos = usuario.fondos != null ? Number(usuario.fondos).toFixed(2) : '0.00';
-          badge.textContent = `Fondos: $${fondos}`;
+          const fondos = usuario.fondos != null ? Number(usuario.fondos) : 0;
+          badge.textContent = `Fondos: $${fondos.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         }
 
         if (usuario || intentos >= 5) {
