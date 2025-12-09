@@ -1,4 +1,8 @@
 /* Estilos Generales y Centralización */
+:root {
+    --page-padding: 20px;
+}
+
 body {
     font-family: Arial, sans-serif;
     background-color: #f0f2f5;
@@ -9,12 +13,14 @@ body {
     align-items: center; /* Centrar horizontalmente */
     min-height: 100vh;
     margin: 0;
-    padding: 20px; /* Añadir un poco de espacio si la pantalla es pequeña */
+    padding: var(--page-padding); /* Añadir un poco de espacio si la pantalla es pequeña */
 }
 
 /* Header a todo ancho con caja centrada internamente */
 .site-header {
-    width: 100%;
+    position: relative;
+    left: calc(-1 * var(--page-padding));
+    width: calc(100% + (var(--page-padding) * 2));
     background: #222; /* color del recuadro */
     box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
